@@ -1,0 +1,41 @@
+#! /usr/bin/env python3
+
+import os
+from io import StringIO
+
+os.chdir('/home/pi/MyPC')
+
+# Open the PDF files with the two volumes of the dictionary
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
+
+output_string1 = StringIO()
+with open('tom1.pdf', 'rb') as in_file:
+    parser = PDFParser(in_file)
+    doc = PDFDocument(parser)
+    rsrcmgr = PDFResourceManager()
+    device = TextConverter(rsrcmgr, output_string1, laparams=LAParams())
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    for page in PDFPage.create_pages(doc):
+        interpreter.process_page(page)
+
+output_string2 = StringIO()
+with open('tom2.pdf', 'rb') as in_file:
+    parser = PDFParser(in_file)
+    doc = PDFDocument(parser)
+    rsrcmgr = PDFResourceManager()
+    device = TextConverter(rsrcmgr, output_string2, laparams=LAParams())
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    for page in PDFPage.create_pages(doc):
+        interpreter.process_page(page)
+
+# Write the content of the PDF files into two txt files
+os.chdir('/home/pi/Documents/PythonEx')
+with open('Rachkov_tom1', 'w') as file:
+    file.write(output_string1.getvalue())
+with open('Rachkov_tom2', 'w') as file:
+    file.write(output_string2.getvalue())

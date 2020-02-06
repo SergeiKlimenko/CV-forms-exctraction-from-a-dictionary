@@ -1,0 +1,78 @@
+#! /usr/bin/env python3
+
+# Find all dictionary entries containing "(из-за" and "(от чего", which are used after the definitions of causal voice verbs in the dictionary
+
+"""There are the following cases in the txt file of the pdf file content:
+  I. "(из-за":
+    1. The head word is on the same line.
+    2. The line is the 2nd line of the entry.
+    3. The line is the 2nd line of the entry, with an empty line in between the two.
+    4. The line is the 2nd line of the entry, with two empty lines in between the two.
+    5. The line is the 2nd line of the entry, with an empty line, a line of another entry, and another empty line in between the two.
+    6. The line is the 2nd line of the entry, with an empty line, 3 lines of another entry, and another empty line in between the two.
+    7. The line is the 2nd line of the entry, with the 1st line missing.
+    8. The line is the 3d line of the entry.
+    9. The line is the 3rd line of the entry, with an empty line after the 2nd line.
+    10. The line is the 4th line of the entry.
+    
+  II. "(от чего":
+    1. The head word is on the same line.
+    2. The line is the 2nd line of the entry.
+    3. The line is the 2nd line of the entry, with two empty lines in between the two."""
+import os
+import re
+import csv
+os.chdir('/home/pi/Documents/PythonEx')
+
+# Check if a line containing the search item is the 1st line of the dictionary entry
+def checkLine(text, ind):
+    if re.match('[a-z]', text[ind]):
+        return ind 
+    else:
+        return checkLine(text, ind-1)
+
+# Finding the 1st line of the dictionary entry
+def checkPrevLine(text, ind, data, line):
+    prevLine = text[ind].strip()
+    if prevLine.endswith('-'):
+        prevLine = prevLine[:-1]
+    data.append(prevLine + line.strip())
+    return data
+
+# Looing for search items and building the data list
+def dataFinder(fileName, searchItem, data):
+    with open(fileName, 'r') as f:
+        fContent = f.readlines()
+        for i in range(len(fContent)):
+            line = fContent[i]
+            if searchItem in line:
+                line_index = checkLine(fContent, i)
+                if line_index == i:
+                    data.append(line.strip())
+                else:
+                    data = checkPrevLine(fContent, line_index, data, line)
+    return data
+
+# The files with the dictionary and the search items
+files = ('Rachkov_tom1', 'Rachkov_tom2')
+searchItems = ('из-за', 'от чего')
+data = list()
+
+# Finding data
+for f in files:
+    for searchItem in searchItems:
+        data = dataFinder(f, searchItem, data)
+
+# Preparation for data split up into good and data to be checked
+sureData = [d for d in data if d.startswith('i')]
+notSoSureData = [d for d in data if not d.startswith('i')]
+outputFiles = {'RachkovDict_CausalVoice_GoodData.csv': sureData, 'RachkovDict_CausalVoice_DataToCheck.csv': notSoSureData}
+
+# Writing the two data lists into files
+for outputFile in outputFiles:
+    with open(outputFile, 'w', encoding='utf-8-sig') as f:
+        outputWriter = csv.writer(f, dialect='excel')
+        for d in outputFiles[outputFile]:
+            firstSpace = d.find(' ')
+            outputWriter.writerow([d[:firstSpace], d[firstSpace+1:]])
+
