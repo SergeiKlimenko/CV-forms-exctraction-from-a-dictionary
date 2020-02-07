@@ -53,6 +53,7 @@ def dataFinder(fileName, searchItem, data):
                     data = checkPrevLine(fContent, line_index, data, line)
     return data
 
+  
 # The files with the dictionary and the search items
 files = ('Rachkov_tom1', 'Rachkov_tom2')
 searchItems = ('из-за', 'от чего')
