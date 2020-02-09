@@ -1,0 +1,60 @@
+#! /usr/bin/env python3
+
+import openpyxl
+
+data = list()
+toCheck = list()
+toCheck2 = list()
+
+def readXLS(fileName):
+    wbFile = openpyxl.load_workbook(fileName)
+    ws = wbFile.active
+
+    rowList = [row for row in list(ws.iter_rows())]
+    return rowList
+
+def separateGoodData(rowList, lst):
+    for row in rowList:
+        if row[0].fill.start_color.index == '00000000':
+            lst.append(row)
+    return lst
+
+def separateDataToCheck(rowList, lst):
+    for row in rowList:
+        if row[0].font.color.rgb == 'FFFF0000':
+            lst.append(row)
+    return lst
+        
+fileGoodData = readXLS('RachkovDict_CV_GoodData.xlsx')
+data = separateGoodData(fileGoodData, data)
+toCheck = separateDataToCheck(fileGoodData, toCheck)
+toCheck = separateDataToCheck(readXLS('RachkovDict_CV_DataToCheck.xlsx'), toCheck)
+
+for item in list(set(data) & set(toCheck)):
+    data.remove(item)
+
+wb = openpyxl.Workbook()
+ws1 = wb.active
+ws1.title = 'Data'
+ws2 = wb.create_sheet('To Check')
+
+def writeData(ws, lst):
+    for line in lst:
+        ws['A{}'.format(lst.index(line)+1)] = line[0].value
+        ws['B{}'.format(lst.index(line)+1)] = line[1].value
+
+writeData(ws1, data)
+writeData(ws2, toCheck)
+wb.save('RachkovDict_CV_Data.xlsx')
+
+RachkovDict = ['Rachkov_tom1', 'Rachkov_tom2']
+
+with open('DataToCheck', 'w', encoding='utf-8-sig') as outputF:
+    for Dict in RachkovDict:
+        with open(Dict, 'r') as f:
+            fContent = f.readlines()
+            for line in toCheck:
+                for l in fContent:
+                    if l[:l.find(' ')] == line[0].value:
+                        outputF.write(''.join(fContent[fContent.index(l)-10:fContent.index(l)+10]))
+                        outputF.write('\n' + '\n')
